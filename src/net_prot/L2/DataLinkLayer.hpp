@@ -13,7 +13,8 @@ class DataLinkLayer : public OSILayer
         enum class Type
         {
             Ethernet,
-            ARP
+            ARP,
+            Generic
         };
         Type type;
         DataLinkLayer(const u_char *data, u_int size);

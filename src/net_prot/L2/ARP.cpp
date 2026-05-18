@@ -10,7 +10,19 @@ ARP::ARP(const u_char* packet_data, u_int length) : DataLinkLayer(packet_data, l
 void ARP::print() const
 {
     std::cout << "[  ARP Header  ]" << std::endl;
-    std::cout << "Who has " << get_target_ip() << "? Tell " << get_sender_ip() << " at " << get_sender_mac() << std::endl;
+
+    if (get_opcode() == 1) //* ARP Request
+    {
+        std::cout << "Who has " << get_target_ip() << "? Tell " << get_sender_ip() << " at " << get_sender_mac() << std::endl;
+    }
+    else if (get_opcode() == 2) //* ARP Reply
+    {
+        std::cout << get_sender_ip() << " is at " << get_sender_mac() << std::endl;
+    }
+    else
+    {
+        std::cout << "Unknown ARP opcode: " << get_opcode() << std::endl;
+    }
 }
 
 std::string ARP::get_sender_ip() const
@@ -75,4 +87,9 @@ void ARP::set_target_mac(const std::string& mac_str) const
     sscanf(mac_str.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
             &header.target_mac[0], &header.target_mac[1], &header.target_mac[2],
             &header.target_mac[3], &header.target_mac[4], &header.target_mac[5]);
+}
+
+u_short ARP::get_opcode() const
+{
+    return ntohs(header.opcode);
 }

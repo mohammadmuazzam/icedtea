@@ -25,6 +25,7 @@ class ARP : public DataLinkLayer
 
         void print() const override;
 
+        u_short get_opcode() const;
         std::string get_sender_ip() const;
         std::string get_target_ip() const;
         std::string get_sender_mac() const;

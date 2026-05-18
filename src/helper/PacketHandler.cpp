@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include "PacketHandler.hpp"
+#include "ARP.hpp"
 #include "IPv4.hpp"
 #include "TCP.hpp"
 #include "Out.hpp"
@@ -16,8 +17,21 @@ int invalid_payload_length = strlen((const char*)invalid_payload)-1;
 
 PacketHandler::PacketHandler(const u_char *frm, u_int len) : frame(frm, len), packet(nullptr), segment(nullptr)
 {
+    data_link = create_data_link(len);
     packet = create_packet(len);
     segment = create_segment(len);
+}
+
+//* create only ARP for now
+std::unique_ptr<DataLinkLayer> PacketHandler::create_data_link(u_int length) 
+{
+    switch (frame.get_ethertype()) 
+    {
+        case 0x0806: //* ARP
+            return std::make_unique<ARP>(frame.get_payload(), length);
+        default:
+            return nullptr;
+    }
 }
 
 //* If the function returns NetworkLayer, we don't need to call create_segment()
@@ -72,6 +86,10 @@ void print_packet(u_char* packet_number, const struct pcap_pkthdr* header, const
     std::cout << "\n----- Packet captured (#" << count << "): " << header->len << " bytes -----" << std::endl;
     PacketHandler handler(packet, header->len);
     handler.frame.print();
+    if (handler.data_link) 
+    {
+        handler.data_link->print();
+    }
     handler.packet->print();
 
     if (handler.segment) 

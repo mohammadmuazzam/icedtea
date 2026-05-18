@@ -4,7 +4,9 @@
 #include "Out.hpp"
 
 DataLinkLayer::DataLinkLayer(const u_char *data, u_int size) : OSILayer(data, size)
-{ }
+{ 
+    type = Type::Generic;
+}
 
 void DataLinkLayer::print() const
 {

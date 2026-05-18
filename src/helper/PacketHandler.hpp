@@ -21,6 +21,7 @@ class PacketHandler
         PacketHandler(const u_char *packet, u_int length);
 
     private:
+    std::unique_ptr<DataLinkLayer> create_data_link(u_int length);
     std::unique_ptr<NetworkLayer> create_packet(u_int length);
     std::unique_ptr<TransportLayer> create_segment(u_int length);
 };
