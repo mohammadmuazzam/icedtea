@@ -22,8 +22,8 @@ struct TCPHeader
     u_short destination_port;       // Destination port
     u_int sequence_number;          // Sequence number
     u_int acknowledgment_number;    // Acknowledgment number
-    u_char data_offset_reserved;    // Data offset (4 bits) + Reserved (4 bits)
-    u_char flags;                   // Flags
+    uint8_t data_offset_reserved;    // Data offset (4 bits) + Reserved (4 bits)
+    uint8_t flags;                   // Flags
     u_short window_size;            // Window size
     u_short checksum;               // Checksum
     u_short urgent_pointer;         // Urgent pointer
@@ -33,9 +33,9 @@ class TCP : public TransportLayer
 {
     private:
         TCPHeader header;
-        u_char* payload;
+        uint8_t* payload;
     public:
-        TCP(const u_char* packet_data, u_int segment_size);
+        TCP(const uint8_t* packet_data, u_int segment_size);
 
         void print() const override;
 
@@ -47,9 +47,9 @@ class TCP : public TransportLayer
 
         u_int get_acknowledgment_number() const;
 
-        u_char get_flags() const;
+        uint8_t get_flags() const;
 
-        u_char* get_payload() const;
+        uint8_t* get_payload() const;
 
         u_int get_payload_length() const;
 };

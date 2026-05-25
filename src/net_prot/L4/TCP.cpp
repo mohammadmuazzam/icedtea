@@ -8,10 +8,10 @@ extern "C" {
     #include <pcap.h>
 }
 
-TCP::TCP(const u_char* packet_data, u_int segment_size) : TransportLayer(packet_data, segment_size)
+TCP::TCP(const uint8_t* packet_data, u_int segment_size) : TransportLayer(packet_data, segment_size)
 {
     memcpy(&header, packet_data, sizeof(TCPHeader));
-    payload = const_cast<u_char*>(packet_data + ((header.data_offset_reserved >> 4) * 4));
+    payload = const_cast<uint8_t*>(packet_data + ((header.data_offset_reserved >> 4) * 4));
 }
 
 void TCP::print() const
@@ -55,12 +55,12 @@ u_int TCP::get_acknowledgment_number() const
     return ntohl(header.acknowledgment_number);
 }
 
-u_char TCP::get_flags() const
+uint8_t TCP::get_flags() const
 {
     return header.flags;
 }
 
-u_char* TCP::get_payload() const
+uint8_t* TCP::get_payload() const
 {
     return payload;
 }

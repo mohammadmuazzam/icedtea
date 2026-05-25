@@ -14,6 +14,6 @@ class NetworkLayer : public OSILayer
         };
         Type type;
 
-        NetworkLayer(const u_char *data, u_int size);
+        NetworkLayer(const uint8_t *data, u_int size);
         virtual void print() const override;
 };

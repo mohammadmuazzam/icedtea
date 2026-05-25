@@ -14,6 +14,6 @@ class TransportLayer : public OSILayer
         };
         Type type;
 
-        TransportLayer(const u_char *data, u_int size);
+        TransportLayer(const uint8_t *data, u_int size);
         virtual void print() const override;
 };

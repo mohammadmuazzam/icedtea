@@ -11,13 +11,18 @@ include_directories(src/helper src/net_prot src/net_prot/L4 src/net_prot/L3 src/
 add_executable(icedtea 
     src/main.cpp
 
+    src/helper/CliHelper.cpp
     src/helper/Out.cpp
+    src/helper/Interface.cpp
+    src/helper/NetworkHelper.cpp
     src/helper/PacketHandler.cpp
     src/helper/PacketSniffer.cpp
-    src/helper/InterfaceSelector.cpp
+    src/helper/PacketBuilder.cpp
+    src/helper/ArpMapper.cpp
+    src/helper/ArpResolver.cpp
     
     src/net_prot/OSILayer.cpp
-    
+    src/net_prot/Types.hpp
 
     src/net_prot/L2/DataLinkLayer.cpp
     src/net_prot/L2/Ethernet.cpp

@@ -5,8 +5,6 @@ extern "C" {
     #include <pcap.h>
 }
 
-
-
 class DataLinkLayer : public OSILayer
 {
     public:
@@ -17,6 +15,6 @@ class DataLinkLayer : public OSILayer
             Generic
         };
         Type type;
-        DataLinkLayer(const u_char *data, u_int size);
+        DataLinkLayer(const uint8_t *data, u_int size);
         virtual void print() const override;
 };

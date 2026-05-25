@@ -18,7 +18,7 @@ class PacketHandler
         std::unique_ptr<DataLinkLayer> data_link;
         std::unique_ptr<NetworkLayer> packet;
         std::unique_ptr<TransportLayer> segment;
-        PacketHandler(const u_char *packet, u_int length);
+        PacketHandler(const uint8_t *packet, u_int length);
 
     private:
     std::unique_ptr<DataLinkLayer> create_data_link(u_int length);
@@ -26,4 +26,4 @@ class PacketHandler
     std::unique_ptr<TransportLayer> create_segment(u_int length);
 };
 
-void print_packet(u_char* packet_number, const struct pcap_pkthdr* header, const u_char* packet);
+void print_packet(uint8_t* packet_number, const struct pcap_pkthdr* header, const uint8_t* packet);

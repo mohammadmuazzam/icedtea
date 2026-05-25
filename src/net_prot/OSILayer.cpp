@@ -6,7 +6,7 @@ extern "C" {
     #include <pcap.h>
 }
 
-OSILayer::OSILayer(const u_char *data, u_int layer_size) : payload(data), size(layer_size)
+OSILayer::OSILayer(const uint8_t *data, u_int layer_size) : payload(data), size(layer_size)
 { }
 
 void OSILayer::print() const
@@ -16,7 +16,7 @@ void OSILayer::print() const
     std::cout << std::endl;
 }
 
-const u_char* OSILayer::get_payload() const
+const uint8_t* OSILayer::get_payload() const
 {
     return payload;
 }

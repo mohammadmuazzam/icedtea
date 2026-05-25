@@ -3,7 +3,7 @@
 #include "DataLinkLayer.hpp"
 #include "Out.hpp"
 
-DataLinkLayer::DataLinkLayer(const u_char *data, u_int size) : OSILayer(data, size)
+DataLinkLayer::DataLinkLayer(const uint8_t *data, u_int size) : OSILayer(data, size)
 { 
     type = Type::Generic;
 }

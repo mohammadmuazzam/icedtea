@@ -7,10 +7,10 @@ extern "C" {
     #include <pcap.h>
 }
 
-IPv4::IPv4(const u_char* packet_data) : NetworkLayer(packet_data, -1)
+IPv4::IPv4(const uint8_t* packet_data) : NetworkLayer(packet_data, -1)
 {
     memcpy(&header, packet_data, sizeof(IPv4Header));
-    payload = const_cast<u_char*>(packet_data + (header.version_ihl & 0x0F) * 4);
+    payload = const_cast<uint8_t*>(packet_data + (header.version_ihl & 0x0F) * 4);
     set_size(ntohs(header.total_length));   //* total packet size (header + payload)
     type = Type::IPv4;
 }
@@ -41,12 +41,12 @@ std::string IPv4::get_destination_ip() const
     return std::string(ip_str);
 }
 
-u_char IPv4::get_protocol() const
+uint8_t IPv4::get_protocol() const
 {
     return header.protocol;
 }
 
-u_char* IPv4::get_payload() const
+uint8_t* IPv4::get_payload() const
 {
     return payload;
 }

@@ -12,14 +12,32 @@ extern "C" {
 }
 
 int PacketHandler::packet_count = 0;
-const u_char* invalid_payload = (const u_char*) "X?X?X? Invalid/Empty Payload";
+const uint8_t* invalid_payload = (const uint8_t*) "X?X?X? Invalid/Empty Payload";
 int invalid_payload_length = strlen((const char*)invalid_payload)-1;
 
-PacketHandler::PacketHandler(const u_char *frm, u_int len) : frame(frm, len), packet(nullptr), segment(nullptr)
+PacketHandler::PacketHandler(const uint8_t *frm, u_int len) : frame(frm, len), packet(nullptr), segment(nullptr)
 {
     data_link = create_data_link(len);
     packet = create_packet(len);
     segment = create_segment(len);
+}
+
+void print_packet(uint8_t* packet_number, const struct pcap_pkthdr* header, const uint8_t* packet)
+{
+    int count = (int) ++PacketHandler::packet_count;
+    std::cout << "\n----- Packet captured (#" << count << "): " << header->len << " bytes -----" << std::endl;
+    PacketHandler handler(packet, header->len);
+    handler.frame.print();
+    if (handler.data_link) 
+    {
+        handler.data_link->print();
+    }
+    handler.packet->print();
+
+    if (handler.segment) 
+    {
+        handler.segment->print();
+    }
 }
 
 //* create only ARP for now
@@ -37,7 +55,7 @@ std::unique_ptr<DataLinkLayer> PacketHandler::create_data_link(u_int length)
 //* If the function returns NetworkLayer, we don't need to call create_segment()
 std::unique_ptr<NetworkLayer> PacketHandler::create_packet(u_int length) 
 {
-    const u_char* payload = frame.get_payload();
+    const uint8_t* payload = frame.get_payload();
 
     if (!payload) {
         std::cerr << "Warning: Invalid payload for Ethernet frame." << std::endl;
@@ -58,7 +76,7 @@ std::unique_ptr<TransportLayer> PacketHandler::create_segment(u_int length)
     if (packet->type == NetworkLayer::Type::IPv4) 
     {
         IPv4& ip = static_cast<IPv4&>(*packet);
-        const u_char* payload = ip.get_payload();
+        const uint8_t* payload = ip.get_payload();
         u_short payload_length = ip.get_payload_length();
 
         if (!payload || payload_length == 0) {
@@ -77,23 +95,5 @@ std::unique_ptr<TransportLayer> PacketHandler::create_segment(u_int length)
     else
     {
         return nullptr;
-    }
-}
-
-void print_packet(u_char* packet_number, const struct pcap_pkthdr* header, const u_char* packet)
-{
-    int count = (int) ++PacketHandler::packet_count;
-    std::cout << "\n----- Packet captured (#" << count << "): " << header->len << " bytes -----" << std::endl;
-    PacketHandler handler(packet, header->len);
-    handler.frame.print();
-    if (handler.data_link) 
-    {
-        handler.data_link->print();
-    }
-    handler.packet->print();
-
-    if (handler.segment) 
-    {
-        handler.segment->print();
     }
 }

@@ -3,16 +3,30 @@
 #include <iostream>
 #include "Ethernet.hpp"
 
-extern "C" {
-    #include <pcap.h>
+void Ethernet::build_ethernet(std::vector<uint8_t>& buffer,
+                              const MacAddress& src_mac, 
+                              const MacAddress& dst_mac, 
+                              uint16_t ether_type)
+{
+    size_t payload_index = buffer.size(); 
+
+    //* move buffer to make space at the start for ethernet header
+    buffer.resize(payload_index + ETHER_HDR_LEN);
+    std::memmove(&buffer[ETHER_HDR_LEN], &buffer[0], payload_index);
+
+    EthernetHeader* eth = reinterpret_cast<EthernetHeader*>(&buffer[0]);
+
+    eth->source      = src_mac;
+    eth->destination = dst_mac;
+    eth->type        = htons(ether_type);
 }
 
-Ethernet::Ethernet(const u_char* packet_data, bpf_u_int32 length) : DataLinkLayer(packet_data, length)
+Ethernet::Ethernet(const uint8_t* packet_data, bpf_u_int32 length) : DataLinkLayer(packet_data, length)
 {
-    memcpy(header.destination, packet_data, ETHER_ADDR_LEN);
-    memcpy(header.source, packet_data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);
-    header.type = ntohs(*(u_short*)(packet_data + 2*ETHER_ADDR_LEN));
-    payload = const_cast<u_char*>(packet_data + ETHER_HDR_LEN);
+    memcpy(header.destination.data(), packet_data, ETHER_ADDR_LEN);
+    memcpy(header.source.data(), packet_data + ETHER_ADDR_LEN, ETHER_ADDR_LEN);
+    header.type = ntohs(*(uint16_t*)(packet_data + 2*ETHER_ADDR_LEN));
+    payload = const_cast<uint8_t*>(packet_data + ETHER_HDR_LEN);
     type = Type::Ethernet;
 }
 
@@ -42,12 +56,12 @@ std::string Ethernet::get_destination_mac() const
     return std::string(mac_str);
 }
 
-u_short Ethernet::get_ethertype() const
+uint16_t Ethernet::get_ethertype() const
 {
     return header.type;
 }
 
-u_char* Ethernet::get_payload() const
+uint8_t* Ethernet::get_payload() const
 {
     return payload;
 }
