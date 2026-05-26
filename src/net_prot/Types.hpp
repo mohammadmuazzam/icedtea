@@ -5,4 +5,15 @@ extern "C" {
     #include <pcap.h>
 }
 
-using MacAddress = std::array<uint8_t, 6>; 
+using MacAddress = std::array<uint8_t, 6>;
+
+struct Config {
+    static constexpr int GATEWAY_INDEX = 0;
+};
+
+struct NetworkContext {
+    MacAddress local_mac;
+    MacAddress gateway_mac;
+    uint32_t local_ip;
+    uint32_t subnet_mask;
+};

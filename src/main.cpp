@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 {
     if (argc < 2) 
     {
-        std::cerr << "Usage: " << argv << " <IP_1> [IP_2] ... [IP_N]\n";
+        std::cerr << "Usage: " << argv << " <Gateway IPv4> [IP_1] [IP_2] ... [IP_N]\n";
         std::cout << "IP address format: X.X.X.X\n";
         return 1; 
     }
@@ -66,6 +66,8 @@ int main(int argc, char* argv[])
 
     MacAddress local_mac;
     uint32_t local_ip;
+    uint32_t subnet_mask;
+
 
     if (!NetworkHelper::get_local_mac(interface.get_interface_name(), local_mac)) 
     {
@@ -79,14 +81,31 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    auto it = arp_resolver.get_arp_cache().find(target_ips_uint32[Config::GATEWAY_INDEX]);
+    if (it == arp_resolver.get_arp_cache().end()) 
+    {
+        std::cerr << "Critical Error: Gateway IP MAC address not found in ARP cache!" << std::endl;
+        return -1;
+    }
+    MacAddress gateway_mac = it->second;
+
+    subnet_mask = NetworkHelper::get_subnet_mask(interface.get_interface_name());
+
+    NetworkContext net_ctx = {
+        .local_mac   = local_mac,
+        .gateway_mac  = gateway_mac,
+        .local_ip    = local_ip,
+        .subnet_mask = subnet_mask
+    };
+
     FriendlyArp friendlyArp(arp_resolver.get_arp_cache(),
-                            local_mac,
-                            local_ip,
-                            interface.get_pcap_handle());
+                            interface.get_pcap_handle(),
+                            net_ctx);
 
     std::thread injection_thread(arp_injection_worker, std::ref(friendlyArp), std::ref(target_ips_uint32));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     PacketSniffer sniffer;
-    sniffer.start_sniffing(interface.get_pcap_handle(), process_packet, nullptr);
+    sniffer.start_sniffing(interface.get_pcap_handle(), process_packet, reinterpret_cast<uint8_t*>(&friendlyArp));
 
     pcap_freealldevs(all_devs);
 }
@@ -96,6 +115,6 @@ void arp_injection_worker(FriendlyArp& friendlyArp, const std::vector<uint32_t>&
     while (running)
     {
         friendlyArp.send_arp_injections(target_ips);
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 }

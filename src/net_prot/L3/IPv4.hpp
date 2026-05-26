@@ -14,8 +14,8 @@ struct IPv4Header
     uint8_t time_to_live;            // Time to live
     uint8_t protocol;                // Protocol
     u_short header_checksum;        // Header checksum
-    uint8_t source_ip[4];            // Source address
-    uint8_t destination_ip[4];       // Destination address
+    uint32_t source_ip;            // Source address
+    uint32_t destination_ip;       // Destination address
 };
 
 class IPv4 : public NetworkLayer
@@ -31,6 +31,10 @@ class IPv4 : public NetworkLayer
         std::string get_source_ip() const;
 
         std::string get_destination_ip() const;
+
+        uint32_t get_src_ip_raw() const;
+        
+        uint32_t get_dest_ip_raw() const;
 
         uint8_t get_protocol() const;
 

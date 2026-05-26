@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
+#include <sys/types.h>
+#include <ifaddrs.h>
 
 #include "NetworkHelper.hpp"
 
@@ -73,3 +75,34 @@ bool NetworkHelper::get_local_ip_pcap(const std::string& interface_name, uint32_
     return found;
 }
 
+//* Get the subnet mask in big endian order
+uint32_t NetworkHelper::get_subnet_mask(const std::string& interface_name)
+{
+    struct ifaddrs* ifaddr_list = nullptr;
+    uint32_t mask_u32 = 0;
+
+    if (getifaddrs(&ifaddr_list) == -1) 
+    {
+        std::cerr << "Failed to get interface addresses" << std::endl;
+        return 0;
+    }
+
+    for (struct ifaddrs* ifa = ifaddr_list; ifa != nullptr; ifa = ifa->ifa_next) 
+    {
+        if (!ifa->ifa_addr || !ifa->ifa_netmask || interface_name != ifa->ifa_name)
+            continue;
+
+        // * if IPv4 address
+        if (ifa->ifa_addr->sa_family == AF_INET) 
+        {
+            struct sockaddr_in* netmask = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_netmask);
+            
+            //* subnet mask in network order (big endian)
+            mask_u32 = netmask->sin_addr.s_addr;
+            break; 
+        }
+    }
+
+    freeifaddrs(ifaddr_list);
+    return mask_u32;
+}

@@ -37,19 +37,23 @@ namespace CliHelper
 
         return nullptr;
     }
-
+    //* index 0 is for gateway address
     std::vector<uint32_t> build_ip_list(const std::vector<std::string>& target_ips)
     {
         std::vector<uint32_t> target_ips_uint32;
         target_ips_uint32.reserve(target_ips.size());
 
-        for (const std::string& ip : target_ips)
+        for (size_t i = 0; i < target_ips.size(); ++i)
         {
             uint32_t network_order_ip = 0;
 
-            if (inet_pton(AF_INET, ip.c_str(), &network_order_ip) != 1)
+            if (inet_pton(AF_INET, target_ips[i].c_str(), &network_order_ip) != 1)
             {
-                std::cerr << "[ ERROR ] Skipping invalid IP address: " << ip << std::endl;
+                if (i == Config::GATEWAY_INDEX)
+                    std::cerr << "Invalid Gateway address: " << target_ips[i] << std::endl;
+                else
+                    std::cerr << "[ ERROR ] Skipping invalid IP address: " << target_ips[i] << std::endl;
+                
                 continue;
             }
 

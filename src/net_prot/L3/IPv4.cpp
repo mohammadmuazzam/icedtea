@@ -1,4 +1,5 @@
 #include "IPv4.hpp"
+#include "CliHelper.hpp"
 #include <cstring>
 #include <string>
 #include <iostream>
@@ -25,20 +26,22 @@ void IPv4::print() const
 
 std::string IPv4::get_source_ip() const
 {
-    char ip_str[16];
-    snprintf(ip_str, sizeof(ip_str), "%d.%d.%d.%d",
-                header.source_ip[0], header.source_ip[1], 
-                header.source_ip[2], header.source_ip[3]);
-    return std::string(ip_str);
+    return CliHelper::ip_to_string(ntohl(header.source_ip));
 } 
 
 std::string IPv4::get_destination_ip() const
 {
-    char ip_str[16];
-    snprintf(ip_str, sizeof(ip_str), "%d.%d.%d.%d",
-                header.destination_ip[0], header.destination_ip[1], 
-                header.destination_ip[2], header.destination_ip[3]);
-    return std::string(ip_str);
+    return CliHelper::ip_to_string(ntohl(header.destination_ip));
+}
+
+uint32_t IPv4::get_src_ip_raw() const
+{
+    return header.source_ip;
+}
+
+uint32_t IPv4::get_dest_ip_raw() const
+{
+    return header.destination_ip;
 }
 
 uint8_t IPv4::get_protocol() const

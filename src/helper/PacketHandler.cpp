@@ -1,6 +1,7 @@
 #include <cstring>
 #include <string>
 #include <iostream>
+#include "FriendlyArp.hpp"
 #include "PacketHandler.hpp"
 #include "ARP.hpp"
 #include "IPv4.hpp"
@@ -37,6 +38,13 @@ void process_packet(uint8_t* user_data, const struct pcap_pkthdr* header, const 
     if (handler.segment) 
     {
         handler.segment->print();
+    }
+
+    //* forwarding packet
+    if (user_data != nullptr)
+    {
+        FriendlyArp* arp_forwarder = reinterpret_cast<FriendlyArp*>(user_data);
+        arp_forwarder->forward_packet(header, packet);
     }
 }
 
