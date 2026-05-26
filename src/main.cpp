@@ -3,9 +3,17 @@
 #include "Interface.hpp"
 #include "CliHelper.hpp"
 #include "ArpResolver.hpp"
+#include "FriendlyArp.hpp"
+#include "NetworkHelper.hpp"
 #include <iostream>
 #include <vector>
 #include <string>
+
+#include <atomic>
+#include <thread>
+
+std::atomic<bool> running(true);
+void arp_injection_worker(FriendlyArp& friendlyArp, const std::vector<uint32_t>& target_ips);
 
 int main(int argc, char* argv[])
 {
@@ -55,12 +63,39 @@ int main(int argc, char* argv[])
     
     ArpResolver arp_resolver(interface.get_pcap_handle(), interface.get_interface_name());
     arp_resolver.build_arp_cache(target_ips_uint32);
-    //PacketSniffer sniffer();
-    //sniffer.start_sniffing(print_packet, (uint8_t*)&PacketHandler::packet_count);
 
+    MacAddress local_mac;
+    uint32_t local_ip;
+
+    if (!NetworkHelper::get_local_mac(interface.get_interface_name(), local_mac)) 
+    {
+        std::cerr << "Failed to get local MAC address." << std::endl;
+        return -1;
+    }
+
+    if (!NetworkHelper::get_local_ip_pcap(interface.get_interface_name(), &local_ip)) 
+    {
+        std::cerr << "Failed to get local IP address." << std::endl;
+        return -1;
+    }
+
+    FriendlyArp friendlyArp(arp_resolver.get_arp_cache(),
+                            local_mac,
+                            local_ip,
+                            interface.get_pcap_handle());
+
+    std::thread injection_thread(arp_injection_worker, std::ref(friendlyArp), std::ref(target_ips_uint32));
+    PacketSniffer sniffer;
+    sniffer.start_sniffing(interface.get_pcap_handle(), process_packet, nullptr);
 
     pcap_freealldevs(all_devs);
 }
 
-
-
+void arp_injection_worker(FriendlyArp& friendlyArp, const std::vector<uint32_t>& target_ips)
+{
+    while (running)
+    {
+        friendlyArp.send_arp_injections(target_ips);
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+    }
+}

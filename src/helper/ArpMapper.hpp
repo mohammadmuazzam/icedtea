@@ -23,4 +23,5 @@ class ArpMapper
         void remove_entry(const uint32_t &ip);
         MacAddress get_mac(const uint32_t &ip);
         bool has_ip(const uint32_t& ip);
+        const std::map<uint32_t, MacAddress>& get_arp_cache();
 };

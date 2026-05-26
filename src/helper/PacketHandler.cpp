@@ -22,7 +22,7 @@ PacketHandler::PacketHandler(const uint8_t *frm, u_int len) : frame(frm, len), p
     segment = create_segment(len);
 }
 
-void print_packet(uint8_t* packet_number, const struct pcap_pkthdr* header, const uint8_t* packet)
+void process_packet(uint8_t* user_data, const struct pcap_pkthdr* header, const uint8_t* packet)
 {
     int count = (int) ++PacketHandler::packet_count;
     std::cout << "\n----- Packet captured (#" << count << "): " << header->len << " bytes -----" << std::endl;

@@ -26,4 +26,4 @@ class PacketHandler
     std::unique_ptr<TransportLayer> create_segment(u_int length);
 };
 
-void print_packet(uint8_t* packet_number, const struct pcap_pkthdr* header, const uint8_t* packet);
+void process_packet(uint8_t* packet_number, const struct pcap_pkthdr* header, const uint8_t* packet);

@@ -61,6 +61,11 @@ void ArpResolver::build_arp_cache(const std::vector<uint32_t> &target_ips)
     arp_mapper.print_cache();
 }
 
+const std::map<uint32_t, MacAddress>& ArpResolver::get_arp_cache()
+{
+    return arp_mapper.get_arp_cache();
+}
+
 void ArpResolver::send_arp_request(const MacAddress& src_mac, const uint32_t& src_ip, 
                                     const uint32_t& dst_ip)
 {

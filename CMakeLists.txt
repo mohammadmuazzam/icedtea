@@ -12,6 +12,7 @@ add_executable(icedtea
     src/main.cpp
 
     src/helper/CliHelper.cpp
+    src/helper/FriendlyArp.cpp
     src/helper/Out.cpp
     src/helper/Interface.cpp
     src/helper/NetworkHelper.cpp

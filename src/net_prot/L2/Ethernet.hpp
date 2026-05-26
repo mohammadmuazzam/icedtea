@@ -20,6 +20,12 @@ class Ethernet : public DataLinkLayer
         EthernetHeader header;
         uint8_t* payload;
     public:
+        enum class Ethertype
+        {
+            IPv4 = 0x0800,
+            ARP = 0x0806
+        };
+
         static void build_ethernet(std::vector<uint8_t>& buffer,
                               const MacAddress& src_mac, 
                               const MacAddress& dst_mac, 

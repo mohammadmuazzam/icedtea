@@ -66,3 +66,9 @@ bool ArpMapper::has_ip(const uint32_t &ip)
 
     return true;
 }
+
+//! inefficient but works for now
+const std::map<uint32_t, MacAddress>& ArpMapper::get_arp_cache()
+{
+    return arp_cache;
+}
