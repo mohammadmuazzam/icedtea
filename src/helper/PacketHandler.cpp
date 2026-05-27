@@ -25,6 +25,35 @@ PacketHandler::PacketHandler(const uint8_t *frm, u_int len) : frame(frm, len), p
 
 void process_packet(uint8_t* user_data, const struct pcap_pkthdr* header, const uint8_t* packet)
 {
+    //#print_packet(header, packet);
+
+    //* forwarding packet
+    if (user_data != nullptr)
+    {
+        CaptureContext* ctx = reinterpret_cast<CaptureContext*>(user_data);
+        
+        if (ctx->pcap_dumper != nullptr) {
+            pcap_dump(reinterpret_cast<u_char*>(ctx->pcap_dumper), header, packet);
+        }
+        else
+        {
+            std::cerr << "[ ERROR ] No pcap_dumper\n";
+            return;
+        }
+
+        if (ctx->arp_forwarder != nullptr) {
+            ctx->arp_forwarder->forward_packet(header, packet);
+        }
+        else
+        {
+            std::cerr << "[ ERROR ] Arp forwarder is empty\n";
+            return;
+        }
+    }
+}
+
+void print_packet(const struct pcap_pkthdr* header, const uint8_t* packet)
+{
     int count = (int) ++PacketHandler::packet_count;
     std::cout << "\n----- Packet captured (#" << count << "): " << header->len << " bytes -----" << std::endl;
     PacketHandler handler(packet, header->len);
@@ -38,13 +67,6 @@ void process_packet(uint8_t* user_data, const struct pcap_pkthdr* header, const 
     if (handler.segment) 
     {
         handler.segment->print();
-    }
-
-    //* forwarding packet
-    if (user_data != nullptr)
-    {
-        FriendlyArp* arp_forwarder = reinterpret_cast<FriendlyArp*>(user_data);
-        arp_forwarder->forward_packet(header, packet);
     }
 }
 

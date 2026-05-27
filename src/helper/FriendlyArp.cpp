@@ -55,8 +55,8 @@ bool FriendlyArp::send_arp_injection(   const uint32_t& impersonate_src_ip, cons
         return false;
     }
 
-    std::cout << "Sent gratuitous ARP to " << CliHelper::ip_to_string(target_ip) << " (impersonating "
-              << CliHelper::ip_to_string(impersonate_src_ip) << ")" << std::endl;
+    //#std::cout << "Sent gratuitous ARP to " << CliHelper::ip_to_string(target_ip) << " (impersonating "
+    //#          << CliHelper::ip_to_string(impersonate_src_ip) << ")" << std::endl;
 
     return true;
 }
@@ -77,6 +77,7 @@ void FriendlyArp::forward_packet(const struct pcap_pkthdr* header, const uint8_t
 
         uint16_t ip_total_length = ip_parser.get_payload_length() + sizeof(IPv4Header); 
         size_t true_frame_size = ETHER_HDR_LEN + ip_total_length;
+        
 
         if (true_frame_size > 1514) 
         {
@@ -98,23 +99,23 @@ void FriendlyArp::forward_packet(const struct pcap_pkthdr* header, const uint8_t
         if ((dest_ip & subnet_mask) != (local_ip & subnet_mask))
         {
             real_dest_mac = gateway_mac;
-            std::cout << "... IPv4 " << CliHelper::ip_to_string(dest_ip) 
+            /*std::cout << "... IPv4 " << CliHelper::ip_to_string(dest_ip) 
                       << " isn't in the local network... Passing to gateway at " 
                       << CliHelper::mac_to_string(gateway_mac) << std::endl;
 
             std::cout << "\t[DEBUG] dest_ip: " << CliHelper::ip_to_string(dest_ip) << std::endl
                       << "\tsubnet_mask    : " << CliHelper::ip_to_string(subnet_mask) << std::endl
-                      << "\tlocal_ip       : " << CliHelper::ip_to_string(local_ip) << std::endl << std::endl;
+                      << "\tlocal_ip       : " << CliHelper::ip_to_string(local_ip) << std::endl << std::endl;*/
         }
         else
         {
             auto it = arp_cache.find(dest_ip);
             if (it == arp_cache.end())
             {
-                std::cout << "Not forwarding, IPv4 " << CliHelper::ip_to_string(dest_ip) << " isn't in arp cache" << std::endl;
+                //#std::cout << "Not forwarding, IPv4 " << CliHelper::ip_to_string(dest_ip) << " isn't in arp cache" << std::endl;
                 return; 
             }    
-            MacAddress real_dest_mac = it->second;
+            real_dest_mac = it->second;
         }
 
         //#std::vector<uint8_t> forward_buffer(packet, packet + header->caplen);
@@ -126,11 +127,5 @@ void FriendlyArp::forward_packet(const struct pcap_pkthdr* header, const uint8_t
         {
             std::cerr << "Failed to forward packet: " << pcap_geterr(pcap_handle) << std::endl;
         }
-        else
-            std::cout << "Successfully forward packet to: " << CliHelper::ip_to_string(dest_ip) << std::endl;
-    }
-    else
-    {
-        std::cout << "Not forwarding, ethertype: 0x" << std::hex << ethertype << std::dec << std::endl;
     }
 }

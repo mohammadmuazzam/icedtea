@@ -1,4 +1,5 @@
 #include <iostream>
+#include <atomic>
 #include "ArpResolver.hpp"
 #include "NetworkHelper.hpp"
 #include "ARP.hpp"
@@ -12,7 +13,7 @@
 ArpResolver::ArpResolver(pcap_t* handle, const std::string& interface) : pcap_handle(handle), interface_name(interface)
 { }
 
-void ArpResolver::build_arp_cache(const std::vector<uint32_t> &target_ips)
+void ArpResolver::build_arp_cache(const std::vector<uint32_t> &target_ips, std::atomic<bool>& stop_flag)
 {
     MacAddress local_mac;
     uint32_t local_ip;
@@ -34,7 +35,7 @@ void ArpResolver::build_arp_cache(const std::vector<uint32_t> &target_ips)
         send_arp_request(local_mac, local_ip, target_ip);
     }
 
-    listen_arp_replies(3);
+    listen_arp_replies(3, stop_flag);
 
     std::vector<uint32_t> failed_ips;
 
@@ -82,7 +83,7 @@ void ArpResolver::send_arp_request(const MacAddress& src_mac, const uint32_t& sr
     }
 }
 
-void ArpResolver::listen_arp_replies(int timeout_seconds)
+void ArpResolver::listen_arp_replies(int timeout_seconds, std::atomic<bool>& stop_flag)
 {
     std::cout << "Listening for ARP replies..." << std::endl;
 
@@ -92,7 +93,7 @@ void ArpResolver::listen_arp_replies(int timeout_seconds)
     auto start_time = std::chrono::steady_clock::now();
     auto timeout = std::chrono::seconds(timeout_seconds);
 
-    while (std::chrono::steady_clock::now() - start_time < timeout) 
+    while (std::chrono::steady_clock::now() - start_time < timeout && stop_flag.load()) 
     {
         int result = pcap_next_ex(pcap_handle, &header, &packet);
         
@@ -121,8 +122,6 @@ void ArpResolver::listen_arp_replies(int timeout_seconds)
                         sender_mac[0], sender_mac[1], sender_mac[2], 
                         sender_mac[3], sender_mac[4], sender_mac[5]);*/
         }
-
-        
     }
 }
 

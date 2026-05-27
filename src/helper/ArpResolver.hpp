@@ -12,7 +12,7 @@ class ArpResolver
 {
     public:
         ArpResolver(pcap_t* handle, const std::string& interface);
-        void build_arp_cache(const std::vector<uint32_t> &target_ips);
+        void build_arp_cache(const std::vector<uint32_t> &target_ips, std::atomic<bool>& stop_flag);
         const std::map<uint32_t, MacAddress>& get_arp_cache();
 
     private:
@@ -22,7 +22,7 @@ class ArpResolver
 
         void send_arp_request(const MacAddress& src_mac, const uint32_t& src_ip, 
                             const uint32_t& dst_ip);
-        void listen_arp_replies(int timeout_seconds);
+        void listen_arp_replies(int timeout_seconds, std::atomic<bool>& stop_flag);
         bool verify_arp_packet(const uint8_t* packet, const bpf_u_int32 length);
         
 

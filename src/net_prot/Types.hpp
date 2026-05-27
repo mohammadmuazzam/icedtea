@@ -17,3 +17,9 @@ struct NetworkContext {
     uint32_t local_ip;
     uint32_t subnet_mask;
 };
+
+class FriendlyArp;
+struct CaptureContext {
+    FriendlyArp* arp_forwarder;
+    pcap_dumper_t* pcap_dumper;
+};
