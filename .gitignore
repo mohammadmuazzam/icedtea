@@ -1,3 +1,4 @@
+#* C/C++ build artifacts
 # Prerequisites
 *.d
 
@@ -69,3 +70,14 @@ Testing/
 .cache/
 
 .vscode/
+
+#* java stuff
+target/
+build/
+bin/
+out/
+
+*.class
+
+# crash logs
+hs_err_pid*.log
