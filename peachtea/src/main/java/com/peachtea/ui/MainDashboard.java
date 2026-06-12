@@ -11,7 +11,6 @@ public class MainDashboard extends JFrame {
         setLocationRelativeTo(null);
         
         //TODO: rethink this
-        // 2. Inject your modular layout panel canvas
         ScanPanel scanPanel = new ScanPanel();
         add(scanPanel);
     }
