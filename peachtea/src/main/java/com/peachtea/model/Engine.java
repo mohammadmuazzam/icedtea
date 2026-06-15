@@ -14,7 +14,13 @@ public class Engine
 
     private Engine() 
     {
-        this.binaryPath = System.getProperty("user.dir") + "/peachtea/bin/icedTea";
+        File binaryFile = new File("bin/icedTea");
+        if (!binaryFile.exists()) {
+            // If running from the root repository directory instead of the sub-module directory
+            binaryFile = new File("peachtea/bin/icedTea");
+        }
+    
+        this.binaryPath = binaryFile.getAbsolutePath();
     }
 
     public static Engine getInstance() 
