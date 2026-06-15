@@ -36,6 +36,12 @@ add_executable(icedtea
     src/net_prot/L4/TCP.cpp
 )
 
+set_target_properties(icedtea PROPERTIES OUTPUT_NAME "icedTea")
+
+set_target_properties(icedtea PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../peachtea/bin"
+)
+
 set(CMAKE_BUILD_TYPE Debug)
 
 # Link the libpcap library

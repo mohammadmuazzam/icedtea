@@ -4,6 +4,9 @@
 #include <atomic>
 #include <thread>
 #include <csignal>
+#include <getopt.h>
+#include <condition_variable>
+#include <mutex>
 
 #include "PacketSniffer.hpp"
 #include "PacketHandler.hpp"
@@ -12,9 +15,12 @@
 #include "ArpResolver.hpp"
 #include "FriendlyArp.hpp"
 #include "NetworkHelper.hpp"
+#include "CommonExceptions.hpp"
 
 
 std::atomic<bool> running(true);
+std::condition_variable cv;
+std::mutex cv_mutex;
 
 void arp_injection_worker(FriendlyArp& friendlyArp, const std::vector<uint32_t>& target_ips);
 void inject_and_sniff(const Interface& interface, const std::vector<uint32_t>& target_ips_uint32, const char* filename);
@@ -24,20 +30,46 @@ bool find_dev(char*& , pcap_if_t*&);
 int main(int argc, char* argv[])
 {
     std::signal(SIGINT, signal_handler);
-    if (argc < 2) 
-    {
-        std::cerr << "Usage: " << argv << "<output file name> <Gateway IPv4> [IP_1] [IP_2] ... [IP_N]\n";
-        std::cout << "IP address format: X.X.X.X\n";
-        return 1; 
-    }
+    std::signal(SIGTERM, signal_handler);
 
-    char* device;
-    pcap_if_t *all_devs;
+    static struct option long_options[] = {
+        {"interface", required_argument, 0, 'i'},
+        {"subnet",    no_argument,       0, 's'},
+        {"run",       no_argument,       0, 'r'},
+        {"localip", no_argument, 0, 'l'},
+        {0, 0, 0, 0}
+    };
+
+    char* device = nullptr;
     std::vector<std::string> target_ips;
 
-    if (!find_dev(device, all_devs))
-        return 1;
-    
+    int opt, idx;
+    bool query_subnet = false;
+    bool run_engine = false;
+    bool query_localip = false;
+
+    while ((opt = getopt_long(argc, argv, "i:sr", long_options, &idx)) != -1)
+    {
+        switch (opt)
+        {
+            case 'i': 
+                device = optarg; 
+                break;
+            case 's': 
+                query_subnet = true; 
+                break;
+            case 'r': 
+                run_engine = true; 
+                break;
+            case 'l': 
+                query_localip = true; 
+                break;
+        }
+    }
+
+    if (!device) { std::cerr << "Error: --interface required\n"; return 1; }
+    if (query_subnet && run_engine) { std::cerr << "Error: --subnet and --run are mutually exclusive\n"; return 1; }
+
     Interface interface(device);
     try
     {
@@ -46,19 +78,47 @@ int main(int argc, char* argv[])
     catch(const std::exception& e)
     {
         std::cerr << "[ ERROR ] " << e.what() << '\n';
+        return 1;
     }
-    
-    char* filename = argv[1];
-    for (int i = 2; i < argc; i++)
-        target_ips.push_back(argv[i]);
-    
-    std::vector<uint32_t> target_ips_uint32 = CliHelper::build_ip_list(target_ips);
 
-    std::cout << "\nUse Ctrl+C to stop sniffing\n\n";
-    
-    inject_and_sniff(interface, target_ips_uint32, filename);
+    if (query_subnet)
+    {
+        std::cout << ntohl(NetworkHelper::get_subnet_mask(interface.get_interface_name())) << std::endl;
+        return 0;
+    }
 
-    pcap_freealldevs(all_devs);
+    if (query_localip)
+    {
+        uint32_t local_ip;
+        NetworkHelper::get_local_ip_pcap(interface.get_interface_name(), &local_ip);
+        std::cout << local_ip << std::endl;
+        return 0;
+    }
+
+    if (run_engine)
+    {
+        char* filename = argv[optind];
+        for (int i = optind + 1; i < argc; i++)
+            target_ips.push_back(argv[i]);
+
+        std::vector<uint32_t> target_ips_uint32 = CliHelper::build_ip_list(target_ips);
+        //#std::cout << "\nUse Ctrl+C to stop sniffing\n\n";
+        try 
+        {
+            //#std::cout << "\nUse Ctrl+C to stop sniffing\n\n";
+            inject_and_sniff(interface, target_ips_uint32, filename);
+        } 
+        catch (const OperationCancelledException& e) 
+        {
+            std::cout << "ss[Cancelling Operation] " << e.what() << " Releasing native hooks." << std::endl;
+        }
+        catch (const std::exception& e) 
+        {
+            std::cerr << "[ERROR] " << e.what() << std::endl;
+        }
+    }
+
+    return 0;
 }
 
 void inject_and_sniff(const Interface& interface, const std::vector<uint32_t>& target_ips_uint32, const char* filename)
@@ -66,10 +126,17 @@ void inject_and_sniff(const Interface& interface, const std::vector<uint32_t>& t
     ArpResolver arp_resolver(interface.get_pcap_handle(), interface.get_interface_name());
     arp_resolver.build_arp_cache(target_ips_uint32, running);
 
+
+    if (arp_resolver.get_arp_cache().size() < 2) 
+    {
+        std::cerr << "Failed to build ARP cache. Less than 2 valid targets found." << std::endl;
+        return;
+    }
+
     MacAddress local_mac;
     uint32_t local_ip;
     uint32_t subnet_mask;
-
+    
     if (!NetworkHelper::get_local_mac(interface.get_interface_name(), local_mac)) 
     {
         std::cerr << "Failed to get local MAC address." << std::endl;
@@ -107,21 +174,23 @@ void inject_and_sniff(const Interface& interface, const std::vector<uint32_t>& t
         .arp_forwarder = &friendlyArp,
         .pcap_dumper   = pcap_dump_open(interface.get_pcap_handle(), filename)
     };
+    
 
     std::thread injection_thread(arp_injection_worker, std::ref(friendlyArp), std::cref(target_ips_uint32));
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::cout << "Sniffing..." << std::endl;
     
     PacketSniffer sniffer;
     sniffer.start_sniffing(interface.get_pcap_handle(), process_packet, reinterpret_cast<uint8_t*>(&ctx), running);
 
-    std::cout << "\nSniffer stopped. Cleaning up assets...\n";
+    std::cerr << "Sniffer stopped. Cleaning up assets..." << std::endl;
     if (injection_thread.joinable()) {
         injection_thread.join();
     }
 
     if (ctx.pcap_dumper != nullptr) {
         pcap_dump_close(ctx.pcap_dumper);
-        std::cout << "Saved to " << filename << std::endl;
+        std::cerr << "Saved to " << filename << std::endl;
     }
 }
 
@@ -130,16 +199,15 @@ void arp_injection_worker(FriendlyArp& friendlyArp, const std::vector<uint32_t>&
     while (running)
     {
         friendlyArp.send_arp_injections(target_ips);
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::unique_lock<std::mutex> lock(cv_mutex);
+        cv.wait_for(lock, std::chrono::seconds(3), [] { return !running.load(); });
     }
 }
 
-void signal_handler(int signal_num) 
+void signal_handler(int) 
 {
-    if (signal_num == SIGINT)
-    {
-        running = false;
-    }
+    running = false;
+    cv.notify_all();
 }
 
 bool find_dev(char*& device, pcap_if_t*& all_devs)

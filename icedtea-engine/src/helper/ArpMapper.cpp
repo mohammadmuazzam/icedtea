@@ -13,7 +13,7 @@ void ArpMapper::print_cache() const
     for (const auto& entry : arp_cache) 
     {
         std::cout << "[" << ++i << "] " << CliHelper::ip_to_string(entry.first) 
-                                        << " -> " << CliHelper::mac_to_string(entry.second) << std::endl;
+                                        << " \t->\t " << CliHelper::mac_to_string(entry.second) << std::endl;
     }
     std::cout << "-----------------" << std::endl;
     std::cout << std::endl;

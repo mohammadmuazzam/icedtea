@@ -16,4 +16,5 @@ namespace CliHelper
     std::string ip_to_string(uint32_t ip);
 
     std::string mac_to_string(const MacAddress& mac);
+    
 }

@@ -59,6 +59,9 @@ compile_commands.json
 *.bak
 *.swp
 
+# Network capture files
+*.pcap
+
 # vcpkg
 vcpkg_installed/
 

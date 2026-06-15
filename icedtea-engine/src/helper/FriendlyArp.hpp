@@ -19,8 +19,9 @@ class FriendlyArp
         MacAddress gateway_mac;
         uint32_t local_ip;
         uint32_t subnet_mask;
+        bool injected_flag = false;
 
-        bool send_arp_injection(const uint32_t& impersonate_src_ip, const MacAddress& target_mac, 
+        void send_arp_injection(const uint32_t& impersonate_src_ip, const MacAddress& target_mac, 
                                 const uint32_t& target_ip);
     public:
         FriendlyArp(const std::map<uint32_t, MacAddress>& arp,

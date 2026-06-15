@@ -2,16 +2,30 @@ package com.peachtea.ui;
 
 import javax.swing.JFrame;
 
-public class MainDashboard extends JFrame {
-    
-    public MainDashboard() {
-        setTitle("Network Infiltrator");
+import com.peachtea.controller.EngineController;
+import com.peachtea.model.ScanResult;
+
+public class MainDashboard extends JFrame 
+{
+    private EngineController engineController;
+
+    public MainDashboard(String networkInterface) 
+    {
+        setTitle("IcedTea");
         setSize(750, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        
-        //TODO: rethink this
-        ScanPanel scanPanel = new ScanPanel();
+
+        ScanPanel scanPanel = new ScanPanel(networkInterface, this::showSpoofPanel);
+        this.engineController = scanPanel.getEngineController();
         add(scanPanel);
+    }
+
+    private void showSpoofPanel(ScanResult result) 
+    {
+        getContentPane().removeAll();
+        add(new SpoofPanel(result, engineController));
+        revalidate();
+        repaint();
     }
 }

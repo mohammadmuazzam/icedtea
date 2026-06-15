@@ -1,10 +1,12 @@
 #include <iostream>
 #include <atomic>
+
 #include "ArpResolver.hpp"
 #include "NetworkHelper.hpp"
 #include "ARP.hpp"
 #include "Ethernet.hpp"
 #include "CliHelper.hpp"
+#include "CommonExceptions.hpp"
 
 //* testing
 #include "PacketHandler.hpp"
@@ -93,8 +95,13 @@ void ArpResolver::listen_arp_replies(int timeout_seconds, std::atomic<bool>& sto
     auto start_time = std::chrono::steady_clock::now();
     auto timeout = std::chrono::seconds(timeout_seconds);
 
-    while (std::chrono::steady_clock::now() - start_time < timeout && stop_flag.load()) 
+    while (std::chrono::steady_clock::now() - start_time < timeout) 
     {
+        if (!stop_flag.load()) 
+        {
+            throw OperationCancelledException();
+        }
+
         int result = pcap_next_ex(pcap_handle, &header, &packet);
         
         if (result == 0) //* no packet within timeout

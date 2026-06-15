@@ -5,7 +5,7 @@ import java.net.Inet4Address;
 public class Host {
     private final Inet4Address ipv4;
     private final String macAddress;  // Formatted as "XX:XX:XX:XX:XX:XX"
-    private final String hostname;    // Device network name (e.g., "Mohammad-PC")
+    private final String hostname;    // Device network name
     private boolean isTarget;         // For marking if this specific device is being spoofed
 
     // Robust constructor requiring core structural network data
